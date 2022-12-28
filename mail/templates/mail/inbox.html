@@ -39,10 +39,14 @@
 
 <div id="email-detail">
     <h3 id="subject"></h3>
+    <!-- adding the id will help in archive and unarchive JS functions -->
+    <p id="emailId" style="display: none;"></p>
     <p id="sender"></p>
     <p id="recipients"></p>
     <p id="body"></p>
     <p id="timestamp" class="text-muted"></p>
+    <button id="archive" type="button" class="btn btn-primary">Archive</button>
+    <button id="unarchive" type="button" class="btn btn-primary">Unarchive</button>
 </div>
 {% endblock %}
 

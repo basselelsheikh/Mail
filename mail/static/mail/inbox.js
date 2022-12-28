@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archived'));
   document.querySelector('#compose').addEventListener('click', compose_email);
   document.querySelector('#compose-form').addEventListener('submit', sendEmailHandler);
+  document.querySelector('#archive').addEventListener('click', archiveHandler);
+  document.querySelector('#unarchive').addEventListener('click', unarchiveHandler);
 
   // By default, load the inbox
   load_mailbox('inbox');
@@ -37,8 +39,8 @@ function load_mailbox(mailbox) {
   document.querySelector('#emails-list').innerHTML = "";
 
   // Show the mailbox name
-  document.querySelector("#mailbox-name").innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
-  // Call the event handler
+  document.querySelector("#mailbox-name").innerHTML = `${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}`;
+  // Call an asynchronous function to fetch the mailbox from the server
   get_mailbox(mailbox);
 }
 
@@ -55,7 +57,6 @@ async function get_mailbox(mailbox) {
     // Create list item to add to the unordered list, emails-list, in inbox.html
     for (const email of result) {
       createEmailItem(email);
-      console.log(email);
 
       // Change the email's background color to gray if it was read
       if (email["read"]) {
@@ -66,10 +67,8 @@ async function get_mailbox(mailbox) {
     // Add event listeners to each Email
     var anchors = document.querySelectorAll('a');
     for (var i = 0; i < anchors.length; i++) {
-      anchors[i].addEventListener('click', viewEmailHandler, false);
+      anchors[i].addEventListener('click', viewEmailHandler);
     }
-
-
 
   }
   catch (error) {
@@ -82,8 +81,11 @@ function viewEmailHandler() {
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'none';
   document.querySelector('#email-detail').style.display = 'block';
+  document.querySelector("#archive").style.display = "none";
+  document.querySelector("#unarchive").style.display = "none";
 
-  // call an asynchronous function to retrieve email details
+
+  // Call an asynchronous function to retrieve email details from the server
   viewEmail(this.id);
 }
 
@@ -102,17 +104,82 @@ async function viewEmail(emailId) {
       throw new Error(`HTTP error: ${responses[1].status}`);
     }
     const result = await responses[0].json();
+
+    // Fill email details in HTML
+    document.querySelector("#email-detail > #emailId").innerHTML = result["id"];
     document.querySelector("#email-detail > #subject").innerHTML = result["subject"];
     document.querySelector("#email-detail > #sender").innerHTML = `<strong>From:</strong> ${result["sender"]}`;
     document.querySelector("#email-detail > #recipients").innerHTML = `<strong>To:</strong> ${result["recipients"]}`;
     document.querySelector("#email-detail > #body").innerHTML = result["body"];
     document.querySelector("#email-detail > #timestamp").innerHTML = result["timestamp"];
 
+
+    // Showing and hiding archive and unarchive buttons depending on the current mailbox
+    if (document.querySelector("#mailbox-name").innerHTML !== "Sent") {
+      if (result["archived"]) {
+        // Hide archive button
+        document.querySelector("#archive").style.display = "none";
+        // Show unarchive button
+        unarchiveButton = document.querySelector("#unarchive");
+        unarchiveButton.style.display = "block";
+      }
+      else {
+        // Hide unarchive button
+        document.querySelector("#unarchive").style.display = "none";
+        // Show archive button
+        archiveButton = document.querySelector("#archive");
+        archiveButton.style.display = "block";
+      }
+
+    }
+
   }
   catch (error) {
     console.error(`Could not retrieve email: ${error}`);
   }
 
+}
+
+function archiveHandler() {
+  // Call asynchronous function to send PUT request to the server
+  archive();
+}
+
+function unarchiveHandler() {
+  // Call asynchronous function to send PUT request to the server
+  unarchive();
+}
+
+async function archive() {
+  try {
+    emailId = document.querySelector("#emailId").innerHTML;
+    const response = await fetch(`/emails/${emailId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        archived: true
+      })
+    })
+    load_mailbox('inbox');
+  }
+  catch (error) {
+    console.error(`Could not archive email: ${error}`);
+  }
+}
+
+async function unarchive() {
+  try {
+    emailId = document.querySelector("#emailId").innerHTML;
+    const response = await fetch(`/emails/${emailId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        archived: false
+      })
+    })
+    load_mailbox('inbox');
+  }
+  catch (error) {
+    console.error(`Could not unarchive email: ${error}`);
+  }
 }
 
 function createEmailItem(email) {
@@ -136,9 +203,9 @@ function createEmailItem(email) {
 }
 function sendEmailHandler(event) {
 
-  // call an asynchronous function to send email
+  // call an asynchronous function to send POST request to the server
   sendEmail();
-  // prevent form default submitting behaviour
+  // prevent the form's default submitting behaviour
   event.preventDefault();
 }
 async function sendEmail(event) {
