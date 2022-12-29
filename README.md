@@ -55,5 +55,5 @@ There are 2 preregistered emails for testing purposes:
 You are free to register new emails
 
 ## Contact
-[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/bassel-el-sheikh/)
+[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/bassel-el-sheikh/)  
 bassel.elsheikh@gmail.com
