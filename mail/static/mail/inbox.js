@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#compose-form').addEventListener('submit', sendEmailHandler);
   document.querySelector('#archive').addEventListener('click', archiveHandler);
   document.querySelector('#unarchive').addEventListener('click', unarchiveHandler);
+  document.querySelector('#reply').addEventListener('click', replyHandler);
 
   // By default, load the inbox
   load_mailbox('inbox');
@@ -70,6 +71,9 @@ async function get_mailbox(mailbox) {
       anchors[i].addEventListener('click', viewEmailHandler);
     }
 
+    // Saving the current mailbox to be able to retrieve later for archive/unarchive
+    localStorage.setItem("currentMailbox", mailbox);
+
   }
   catch (error) {
     console.error(`Could not retrieve mailbox: ${error}`);
@@ -113,20 +117,19 @@ async function viewEmail(emailId) {
     document.querySelector("#email-detail > #body").innerHTML = result["body"];
     document.querySelector("#email-detail > #timestamp").innerHTML = result["timestamp"];
 
+    // Saving the current email to be able to retrieve later for replying
+    localStorage.setItem("currentEmail", JSON.stringify(result));
 
     // Showing and hiding archive and unarchive buttons depending on the current mailbox
-    if (document.querySelector("#mailbox-name").innerHTML !== "Sent") {
+    currentMailbox = localStorage.getItem("currentMailbox");
+    if (currentMailbox !== "sent") {
       if (result["archived"]) {
-        // Hide archive button
         document.querySelector("#archive").style.display = "none";
-        // Show unarchive button
         unarchiveButton = document.querySelector("#unarchive");
         unarchiveButton.style.display = "block";
       }
       else {
-        // Hide unarchive button
         document.querySelector("#unarchive").style.display = "none";
-        // Show archive button
         archiveButton = document.querySelector("#archive");
         archiveButton.style.display = "block";
       }
@@ -238,3 +241,21 @@ async function sendEmail(event) {
 
 
 }
+
+function replyHandler(event) {
+  compose_email();
+  currentEmail = JSON.parse(localStorage.getItem("currentEmail"));
+  document.querySelector('#compose-recipients').value = currentEmail["sender"];
+
+  // Prefill the subject field
+  if (currentEmail["subject"].includes("Re: ")) {
+    document.querySelector('#compose-subject').value = `${currentEmail["subject"]}`;
+  }
+  else {
+    document.querySelector('#compose-subject').value = `Re: ${currentEmail["subject"]}`;
+  }
+  // Prefill the body
+  document.querySelector('#compose-body').value = `On ${currentEmail["timestamp"]}, ${currentEmail["sender"]} wrote:\n${currentEmail["body"]}\n-----\n`;
+  document.querySelector('#compose-alert').textContent = '';
+}
+
